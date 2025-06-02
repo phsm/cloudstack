@@ -21,6 +21,7 @@ import com.cloud.agent.api.to.DataObjectType;
 import com.cloud.agent.api.to.NicTO;
 import com.cloud.agent.api.to.VirtualMachineTO;
 import com.cloud.configuration.ConfigurationManagerImpl;
+import com.cloud.domain.dao.DomainDao;
 import com.cloud.host.HostVO;
 import com.cloud.hypervisor.Hypervisor.HypervisorType;
 import com.cloud.hypervisor.dao.HypervisorCapabilitiesDao;
@@ -57,6 +58,8 @@ import org.apache.cloudstack.utils.bytescale.ByteScaleUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 public class KVMGuru extends HypervisorGuruBase implements HypervisorGuru {
+    @Inject
+    DomainDao _domainDao;
     @Inject
     GuestOSDao _guestOsDao;
     @Inject
@@ -161,9 +164,19 @@ public class KVMGuru extends HypervisorGuruBase implements HypervisorGuru {
 
         enableDpdkIfNeeded(vm, to);
 
+        to.setMetadataServiceOfferingName(vm.getServiceOffering().getName());
+        to.setMetadataTemplateName(vm.getTemplate().getName());
+        to.setMetadataDisplayName(vm.getHostName());
+
+        String domainName = _domainDao.findById(vm.getVirtualMachine().getDomainId()).getName();
+        to.setMetadataDomainName(domainName);
+
+        to.setMetadataAccountName(vm.getOwner().getAccountName());
+
         VirtualMachine virtualMachine = vm.getVirtualMachine();
         Long hostId = virtualMachine.getHostId();
         HostVO host = hostId == null ? null : hostDao.findById(hostId);
+        if (host != null) to.setMetadataHostTags(host.getHostTags());
 
         // Determine the VM's OS description
         configureVmOsDescription(virtualMachine, to, host);

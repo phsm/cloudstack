@@ -44,6 +44,7 @@ public class LibvirtVMDef {
     private String _platformEmulator;
     private final Map<String, Object> components = new HashMap<String, Object>();
     private static final int NUMBER_OF_IOTHREADS = AgentPropertiesFileHandler.getPropertyValue(AgentProperties.IOTHREADS);
+    private Map<String, List<String>> metadata;
 
     public static class GuestDef {
         enum GuestType {
@@ -2162,34 +2163,6 @@ public class LibvirtVMDef {
         }
     }
 
-    public class MetadataDef {
-        Map<String, Object> customNodes = new HashMap<>();
-
-        public <T> T getMetadataNode(Class<T> fieldClass) {
-            T field = (T) customNodes.get(fieldClass.getName());
-            if (field == null) {
-                try {
-                    field = fieldClass.newInstance();
-                    customNodes.put(field.getClass().getName(), field);
-                } catch (InstantiationException | IllegalAccessException e) {
-                    LOGGER.debug("No default constructor available in class " + fieldClass.getName() + ", ignoring exception", e);
-                }
-            }
-            return field;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder fsBuilder = new StringBuilder();
-            fsBuilder.append("<metadata>\n");
-            for (Object field : customNodes.values()) {
-                fsBuilder.append(field.toString());
-            }
-            fsBuilder.append("</metadata>\n");
-            return fsBuilder.toString();
-        }
-    }
-
     public static class RngDef {
         enum RngModel {
             VIRTIO("virtio");
@@ -2412,13 +2385,41 @@ public class LibvirtVMDef {
         return null;
     }
 
-    public MetadataDef getMetaData() {
-        MetadataDef o = (MetadataDef) components.get(MetadataDef.class.toString());
-        if (o == null) {
-            o = new MetadataDef();
-            addComp(o);
+    public void setMetadata(Map<String, List<String>> data) { metadata = data; }
+
+    private String renderMetadata() {
+        StringBuilder sb = new StringBuilder();
+        if (metadata == null || metadata.size() == 0) return sb.toString();
+
+        sb.append("<metadata><cs:instance xmlns:cs=\"https://cloudstack.apache.org/instance\">\n");
+        for (var entry : metadata.entrySet()) {
+            String key = entry.getKey();
+            List<String> value = entry.getValue();
+            LOGGER.info("Processing the metadata key {} value {}", key, value);
+            if (value == null) {
+                LOGGER.warn("The value for the key {} is null, skipping this value", key);
+                continue;
+            }
+            if (value.size() > 1) {
+                // The convention is that the "outer" XML element embracing the list becomes plural
+                // (see the %ss formatter that adds an extra "s" in the end of the format string below), and the inner element
+                // remains singular. For example, the host tags XML will look like this:
+                // <hosttags>
+                //   <hosttag>a</hosttag>
+                //   <hosttag>b</hosttag>
+                // </hosttags>
+                sb.append(String.format("<cs:%ss>\n", key));
+                for ( var i: value ) {
+                    sb.append(String.format("<cs:%1$s>%2$s</cs:%1$s>", key, i));
+                }
+                sb.append(String.format("</cs:%ss>\n", key));
+            }
+            else {
+                sb.append(String.format("<cs:%1$s>%2$s</cs:%1$s>\n", entry.getKey(), value.get(0)));
+            }
         }
-        return o;
+        sb.append("</cs:instance></metadata>\n");
+        return sb.toString();
     }
 
     @Override
@@ -2432,6 +2433,9 @@ public class LibvirtVMDef {
         if (_desc != null) {
             vmBuilder.append("<description>" + _desc + "</description>\n");
         }
+
+        vmBuilder.append(renderMetadata());
+
         for (Object o : components.values()) {
             vmBuilder.append(o.toString());
         }

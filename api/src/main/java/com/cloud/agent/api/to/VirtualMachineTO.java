@@ -86,6 +86,12 @@ public class VirtualMachineTO {
     DeployAsIsInfoTO deployAsIsInfo;
     String metadataManufacturer;
     String metadataProductName;
+    String metadataDisplayName;
+    String metadataAccountName;
+    String metadataDomainName;
+    String metadataServiceOfferingName;
+    String metadataTemplateName;
+    List<String> metadataHostTags;
 
     public VirtualMachineTO(long id, String instanceName, VirtualMachine.Type type, int cpus, Integer speed, long minRam, long maxRam, BootloaderType bootloader,
             String os, boolean enableHA, boolean limitCpuUse, String vncPassword) {
@@ -442,6 +448,42 @@ public class VirtualMachineTO {
     public String getMetadataProductName() {
         return metadataProductName;
     }
+
+    public String getMetadataAccountName() { return metadataAccountName; }
+
+    public void setMetadataAccountName(String accountName) {
+        metadataAccountName = accountName;
+    }
+
+    public String getMetadataDomainName() { return metadataDomainName; }
+
+    public void setMetadataDomainName(String domainName) {
+        metadataDomainName = domainName;
+    }
+
+    public void setMetadataServiceOfferingName(String serviceOfferingName) {
+        metadataServiceOfferingName = serviceOfferingName;
+    }
+
+    public String getMetadataServiceOfferingName() { return metadataServiceOfferingName; }
+
+    public void setMetadataDisplayName(String displayName) {
+        metadataDisplayName = displayName;
+    }
+
+    public String getMetadataDisplayName() { return metadataDisplayName; }
+
+    public void setMetadataTemplateName(String templateName) {
+        metadataTemplateName = templateName;
+    }
+
+    public String getMetadataTemplateName() { return metadataTemplateName; }
+
+    public void setMetadataHostTags(List<String> hostTags) {
+        metadataHostTags = hostTags;
+    }
+
+    public List<String> getMetadataHostTags() { return metadataHostTags; }
 
     public void setMetadataProductName(String metadataProductName) {
         this.metadataProductName = metadataProductName;

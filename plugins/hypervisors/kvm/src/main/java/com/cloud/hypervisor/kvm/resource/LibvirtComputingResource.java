@@ -2558,6 +2558,15 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         vm.setDomDescription(vmTO.getOs());
         vm.setPlatformEmulator(vmTO.getPlatformEmulator());
 
+        HashMap<String, List<String>> metadata = new HashMap<String, List<String>>();
+        metadata.put("domain", Arrays.asList(vmTO.getMetadataDomainName()));
+        metadata.put("account", Arrays.asList(vmTO.getMetadataAccountName()));
+        metadata.put("displayname", Arrays.asList(vmTO.getMetadataDisplayName()));
+        metadata.put("serviceoffering", Arrays.asList(vmTO.getMetadataServiceOfferingName()));
+        metadata.put("templatename", Arrays.asList(vmTO.getMetadataTemplateName()));
+        metadata.put("hosttag", vmTO.getMetadataHostTags());
+        vm.setMetadata(metadata);
+
         Map<String, String> customParams = vmTO.getDetails();
         boolean isUefiEnabled = false;
         boolean isSecureBoot = false;
